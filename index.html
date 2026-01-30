@@ -1,71 +1,190 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Local Entity Detector (AI-Free)</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta charset="UTF-8" />
+<title>Post Detector Demo</title>
 
-  <!-- LEGAL SIGNAL -->
-  <meta name="ai-usage" content="none">
-  <meta name="editorial-responsibility" content="user-generated">
+<style>
+body {
+  font-family: system-ui, sans-serif;
+  background: #f7f7f7;
+  padding: 20px;
+}
 
-  <style>
-    body { font-family: system-ui, sans-serif; padding: 20px; }
-    textarea { width: 100%; height: 120px; font-size: 16px; }
-    .suggestion { color: blue; cursor: pointer; }
-    .panel {
-      border-left: 1px solid #ccc;
-      padding: 10px;
-      margin-top: 20px;
-    }
-    iframe { width: 100%; height: 300px; border: none; }
-  </style>
+.post, .comment {
+  background: #fff;
+  padding: 12px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+}
+
+.actions button {
+  margin-right: 6px;
+  cursor: pointer;
+}
+
+.detected {
+  color: #0066cc;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.popup {
+  position: fixed;
+  top: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #fff;
+  border: 1px solid #ccc;
+  padding: 16px;
+  border-radius: 8px;
+  z-index: 1000;
+  width: 300px;
+}
+
+.popup button {
+  margin-right: 6px;
+}
+
+.hidden { display: none; }
+
+.sidebar {
+  position: fixed;
+  right: 0;
+  top: 0;
+  width: 320px;
+  height: 100%;
+  background: #fafafa;
+  border-left: 1px solid #ccc;
+  padding: 12px;
+  overflow-y: auto;
+}
+</style>
 </head>
 
 <body>
 
-<h2>Post editor (AI-free)</h2>
+<h2>Create Post</h2>
+<textarea id="postInput" rows="4" style="width:100%"></textarea>
+<br><br>
+<button onclick="publishPost()">Publish</button>
 
-<textarea id="editor" placeholder="Type your post here..."></textarea>
+<div id="posts"></div>
 
-<div id="suggestions"></div>
-
-<div class="panel" id="panel" hidden>
-  <iframe id="wikiFrame"></iframe>
-</div>
+<div id="confirmPopup" class="popup hidden"></div>
+<div id="infoSidebar" class="sidebar hidden"></div>
 
 <script>
-const editor = document.getElementById("editor");
-const suggestions = document.getElementById("suggestions");
-const panel = document.getElementById("panel");
-const wikiFrame = document.getElementById("wikiFrame");
+// --- Fuzzy dictionary (local, editable) ---
+const entities = [
+  { key: "elon musk", aliases: ["musk", "elon"], type: "person" },
+  { key: "britney spears", aliases: ["britney", "britnney"], type: "person" }
+];
 
-// Simple deterministic detector (NO AI)
-const ENTITY_REGEX = /\b([A-Z][a-z]+(?:\s[A-Z][a-z]+)*)\b/g;
+// --- Utils ---
+function fuzzyMatch(word, alias) {
+  return word.toLowerCase().includes(alias);
+}
 
-editor.addEventListener("input", () => {
-  suggestions.innerHTML = "";
-  panel.hidden = true;
-
-  const text = editor.value;
-  const matches = [...new Set(text.match(ENTITY_REGEX) || [])];
-
-  matches.forEach(term => {
-    const span = document.createElement("span");
-    span.textContent = term;
-    span.className = "suggestion";
-    span.onclick = () => {
-      wikiFrame.src = `https://en.wikipedia.org/wiki/${encodeURIComponent(term)}`;
-      panel.hidden = false;
-    };
-    suggestions.append(span, " ");
+// --- Detection ---
+function detectEntities(text) {
+  let detected = [];
+  entities.forEach(e => {
+    e.aliases.forEach(a => {
+      if (fuzzyMatch(text, a)) {
+        detected.push({ display: a, entity: e });
+      }
+    });
   });
-});
-</script>
+  return detected;
+}
 
-<footer style="margin-top:40px;font-size:12px;color:#666">
-  This platform uses user-initiated external frames for reference only. No editorial control.
-</footer>
+// --- Publish post ---
+function publishPost() {
+  const text = document.getElementById("postInput").value;
+  const detected = detectEntities(text);
+
+  let html = text;
+  detected.forEach(d => {
+    html = html.replace(
+      new RegExp(d.display, "gi"),
+      `<span class="detected" onclick="confirmEntity('${d.entity.key}')">${d.display}</span>`
+    );
+  });
+
+  const post = document.createElement("div");
+  post.className = "post";
+  post.innerHTML = `
+    <div class="content">${html}</div>
+    <div class="actions">
+      <button onclick="edit(this)">Edit</button>
+      <button onclick="react(this)">👍</button>
+      <button onclick="comment(this)">Comment</button>
+    </div>
+  `;
+  document.getElementById("posts").prepend(post);
+  document.getElementById("postInput").value = "";
+}
+
+// --- Actions ---
+function edit(btn) {
+  const content = btn.closest(".post").querySelector(".content");
+  const text = prompt("Edit post:", content.innerText);
+  if (text !== null) content.innerText = text;
+}
+
+function react(btn) {
+  alert("Reaction registered (local only)");
+}
+
+function comment(btn) {
+  const post = btn.closest(".post");
+  const text = prompt("Write a comment:");
+  if (!text) return;
+  const c = document.createElement("div");
+  c.className = "comment";
+  c.innerHTML = `
+    ${text}
+    <div class="actions">
+      <button onclick="edit(this)">Edit</button>
+      <button onclick="react(this)">👍</button>
+    </div>
+  `;
+  post.appendChild(c);
+}
+
+// --- Confirmation ---
+function confirmEntity(entityKey) {
+  const popup = document.getElementById("confirmPopup");
+  popup.innerHTML = `
+    <strong>Did you mean:</strong><br><br>
+    ${entityKey}?<br><br>
+    <button onclick="acceptEntity('${entityKey}')">Yes</button>
+    <button onclick="closePopup()">No</button>
+  `;
+  popup.classList.remove("hidden");
+}
+
+function closePopup() {
+  document.getElementById("confirmPopup").classList.add("hidden");
+}
+
+function acceptEntity(entityKey) {
+  closePopup();
+  const sidebar = document.getElementById("infoSidebar");
+  sidebar.innerHTML = `
+    <h3>${entityKey}</h3>
+    <p>External reference preview.</p>
+    <iframe
+      src="https://en.wikipedia.org/wiki/${entityKey.replace(/ /g, "_")}"
+      width="100%"
+      height="400"
+      loading="lazy">
+    </iframe>
+  `;
+  sidebar.classList.remove("hidden");
+}
+</script>
 
 </body>
 </html>
