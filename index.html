@@ -1,311 +1,75 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>Groups Community</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+  <head>
+    <meta charset="UTF-8" />
 
-<style>
-/* ---------- THEME ---------- */
-:root {
-  --bg: #f4f5f7;
-  --card: #ffffff;
-  --text: #111827;
-  --muted: #6b7280;
-  --primary: #2563eb;
-  --border: #e5e7eb;
-}
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>😊</text></svg>"
+    />
 
-.dark {
-  --bg: #0f172a;
-  --card: #111827;
-  --text: #e5e7eb;
-  --muted: #9ca3af;
-  --border: #1f2937;
-}
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ephemeral Groups</title>
 
-/* ---------- BASE ---------- */
-* { box-sizing: border-box; }
-body {
-  margin: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont;
-  background: var(--bg);
-  color: var(--text);
-}
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
 
-.app {
-  display: grid;
-  grid-template-columns: 240px 1fr 0;
-  height: 100vh;
-  transition: grid-template-columns .3s ease;
-}
+    <!-- Public Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    >
 
-.app.show-panel {
-  grid-template-columns: 240px 1fr 380px;
-}
+    <style>
+      body {
+        font-family: 'Public Sans', sans-serif;
+      }
 
-/* ---------- SIDEBAR ---------- */
-.sidebar {
-  background: #111827;
-  color: #fff;
-  padding: 16px;
-}
+      .site-logo {
+        position: fixed;
+        top: 0;
+        left: 0;
+        font-family: 'Public Sans',
+          "Apple Color Emoji",
+          "Segoe UI Emoji",
+          "Segoe UI Symbol",
+          "Noto Color Emoji",
+          sans-serif;
+        font-weight: bold;
+        color: #d1d5db;
+        user-select: none;
+        font-size: clamp(8rem, 20vw, 15rem);
+        transform: rotate(-15deg) translate(-25%, -35%);
+        z-index: 0;
+        pointer-events: none;
+      }
 
-.sidebar h2 {
-  margin-bottom: 20px;
-}
+      #root {
+        position: relative;
+        z-index: 1;
+      }
+    </style>
 
-.sidebar button {
-  width: 100%;
-  margin-bottom: 8px;
-  padding: 8px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-}
+    <!-- Import Map (NO AI) -->
+    <script type="importmap">
+    {
+      "imports": {
+        "react": "https://esm.sh/react@^19.2.4",
+        "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+        "react/": "https://esm.sh/react@^19.2.4/"
+      }
+    }
+    </script>
+  </head>
 
-/* ---------- FEED ---------- */
-.feed {
-  padding: 24px;
-  overflow-y: auto;
-}
+  <body class="bg-white">
+    <div class="site-logo">EG</div>
+    <div id="root"></div>
 
-.card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 16px;
-  margin-bottom: 16px;
-}
-
-textarea, input {
-  width: 100%;
-  padding: 10px;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background: transparent;
-  color: var(--text);
-}
-
-button.primary {
-  background: var(--primary);
-  color: #fff;
-  border: none;
-  padding: 8px 14px;
-  border-radius: 999px;
-  cursor: pointer;
-}
-
-/* ---------- POST ---------- */
-.post-actions button {
-  background: none;
-  border: none;
-  margin-right: 8px;
-  cursor: pointer;
-  color: var(--muted);
-}
-
-.post-actions span {
-  margin-right: 10px;
-}
-
-.detected {
-  color: var(--primary);
-  cursor: pointer;
-  font-weight: 500;
-}
-
-/* ---------- COMMENTS ---------- */
-.comment {
-  margin-left: 20px;
-  margin-top: 8px;
-  border-left: 2px solid var(--border);
-  padding-left: 8px;
-}
-
-/* ---------- PANEL ---------- */
-.panel {
-  background: var(--card);
-  border-left: 1px solid var(--border);
-  padding: 12px;
-}
-
-.panel-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-/* ---------- MODAL ---------- */
-.modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,.4);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.modal-box {
-  background: var(--card);
-  padding: 20px;
-  border-radius: 14px;
-  width: 320px;
-}
-</style>
-</head>
-
-<body>
-
-<div class="app" id="app">
-
-  <!-- SIDEBAR -->
-  <aside class="sidebar">
-    <h2>Groups</h2>
-    <button onclick="setView('feed')">Feed</button>
-    <button onclick="createGroup()">Create Group</button>
-    <button onclick="toggleTheme()">🌙 / ☀️</button>
-    <button onclick="showTerms()">Terms & Privacy</button>
-  </aside>
-
-  <!-- FEED -->
-  <main class="feed" id="feed">
-    <div class="card">
-      <h3>Create post</h3>
-      <textarea id="postInput" rows="3"></textarea>
-      <br><br>
-      <button class="primary" onclick="publish()">Post</button>
-    </div>
-    <div id="posts"></div>
-  </main>
-
-  <!-- INFO PANEL -->
-  <aside class="panel" id="panel">
-    <div class="panel-header">
-      <strong id="panelTitle"></strong>
-      <button onclick="closePanel()">✕</button>
-    </div>
-    <iframe id="wikiFrame" width="100%" height="100%"></iframe>
-  </aside>
-
-</div>
-
-<!-- MODAL -->
-<div id="modal" class="modal" style="display:none">
-  <div class="modal-box" id="modalBox"></div>
-</div>
-
-<script>
-/* ---------- STATE ---------- */
-let groups = ["General"];
-let reactions = {};
-let entities = [
-  { name: "Elon Musk", aliases: ["musk", "elon"] },
-  { name: "Britney Spears", aliases: ["britney", "britnney"] }
-];
-
-/* ---------- THEME ---------- */
-function toggleTheme() {
-  document.body.classList.toggle("dark");
-}
-
-/* ---------- GROUP ---------- */
-function createGroup() {
-  const name = prompt("Group name:");
-  if (name) groups.push(name);
-}
-
-/* ---------- DETECTION ---------- */
-function detect(text) {
-  let found = [];
-  entities.forEach(e =>
-    e.aliases.forEach(a => {
-      if (text.toLowerCase().includes(a))
-        found.push({ alias: a, entity: e });
-    })
-  );
-  return found;
-}
-
-/* ---------- POST ---------- */
-function publish() {
-  let text = postInput.value;
-  detect(text).forEach(d => {
-    text = text.replace(
-      new RegExp(d.alias, "gi"),
-      `<span class="detected" onclick="confirmEntity('${d.entity.name}')">${d.alias}</span>`
-    );
-  });
-
-  const id = Date.now();
-  reactions[id] = 0;
-
-  posts.innerHTML += `
-    <div class="card">
-      <div contenteditable="true">${text}</div>
-      <div class="post-actions">
-        <span onclick="react(${id})">❤️ ${reactions[id]}</span>
-        <button onclick="addComment(this)">Comment</button>
-      </div>
-      <div class="comments"></div>
-    </div>
-  `;
-  postInput.value = "";
-}
-
-/* ---------- COMMENTS ---------- */
-function addComment(btn) {
-  const text = prompt("Comment:");
-  if (!text) return;
-  btn.closest(".card").querySelector(".comments").innerHTML += `
-    <div class="comment" contenteditable="true">${text}</div>
-  `;
-}
-
-/* ---------- REACTIONS ---------- */
-function react(id) {
-  reactions[id]++;
-  event.target.innerText = `❤️ ${reactions[id]}`;
-}
-
-/* ---------- ENTITY ---------- */
-function confirmEntity(name) {
-  modal.style.display = "flex";
-  modalBox.innerHTML = `
-    <strong>Did you mean:</strong><br><br>
-    ${name}?<br><br>
-    <button onclick="openPanel('${name}')">Yes</button>
-    <button onclick="closeModal()">No</button>
-  `;
-}
-
-function openPanel(name) {
-  closeModal();
-  app.classList.add("show-panel");
-  panelTitle.innerText = name;
-  wikiFrame.src = "https://en.wikipedia.org/wiki/" + name.replace(/ /g,"_");
-}
-
-function closePanel() {
-  app.classList.remove("show-panel");
-  wikiFrame.src = "";
-}
-
-function closeModal() {
-  modal.style.display = "none";
-}
-
-/* ---------- TERMS ---------- */
-function showTerms() {
-  modal.style.display = "flex";
-  modalBox.innerHTML = `
-    <h3>Terms & Privacy</h3>
-    <p>This platform does not provide editorial content. External frames are user-triggered references only.</p>
-    <p>AI features are optional and not required.</p>
-    <button onclick="closeModal()">Close</button>
-  `;
-}
-</script>
-
-</body>
+    <!-- App entry -->
+    <script type="module" src="/index.tsx"></script>
+  </body>
 </html>
