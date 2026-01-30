@@ -1,38 +1,71 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <link rel="shortcut icon" href="favicon-ysharer.ico" type="image/x-icon">
+  <meta charset="UTF-8" />
+  <title>Local Entity Detector (AI-Free)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- LEGAL SIGNAL -->
+  <meta name="ai-usage" content="none">
+  <meta name="editorial-responsibility" content="user-generated">
+
   <style>
-    body {
-      background-color: #ffffff;
-      margin: 0;
-      padding: 0;
+    body { font-family: system-ui, sans-serif; padding: 20px; }
+    textarea { width: 100%; height: 120px; font-size: 16px; }
+    .suggestion { color: blue; cursor: pointer; }
+    .panel {
+      border-left: 1px solid #ccc;
+      padding: 10px;
+      margin-top: 20px;
     }
-
-    .border {
-      border: 0px solid #000000;
-    }
-
-    iframe {
-      width: 100%;
-      height: 586px;
-      border: none;
-      display: block;
-    }
+    iframe { width: 100%; height: 300px; border: none; }
   </style>
 </head>
+
 <body>
-  <!-- CONTEÚDO PRINCIPAL -->
-  <iframe 
-    src="https://ysharer.wixstudio.com/english" 
-    width="100%" 
-    height="600" 
-    style="border:1px solid #ccc;">
-  </iframe>
+
+<h2>Post editor (AI-free)</h2>
+
+<textarea id="editor" placeholder="Type your post here..."></textarea>
+
+<div id="suggestions"></div>
+
+<div class="panel" id="panel" hidden>
+  <iframe id="wikiFrame"></iframe>
+</div>
+
+<script>
+const editor = document.getElementById("editor");
+const suggestions = document.getElementById("suggestions");
+const panel = document.getElementById("panel");
+const wikiFrame = document.getElementById("wikiFrame");
+
+// Simple deterministic detector (NO AI)
+const ENTITY_REGEX = /\b([A-Z][a-z]+(?:\s[A-Z][a-z]+)*)\b/g;
+
+editor.addEventListener("input", () => {
+  suggestions.innerHTML = "";
+  panel.hidden = true;
+
+  const text = editor.value;
+  const matches = [...new Set(text.match(ENTITY_REGEX) || [])];
+
+  matches.forEach(term => {
+    const span = document.createElement("span");
+    span.textContent = term;
+    span.className = "suggestion";
+    span.onclick = () => {
+      wikiFrame.src = `https://en.wikipedia.org/wiki/${encodeURIComponent(term)}`;
+      panel.hidden = false;
+    };
+    suggestions.append(span, " ");
+  });
+});
+</script>
+
+<footer style="margin-top:40px;font-size:12px;color:#666">
+  This platform uses user-initiated external frames for reference only. No editorial control.
+</footer>
+
 </body>
 </html>
-
-
-
-
-
