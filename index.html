@@ -1,75 +1,176 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
+<head>
+  <meta charset="UTF-8" />
+  <title>Ephemeral Groups</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <link
-      rel="icon"
-      type="image/svg+xml"
-      href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>😊</text></svg>"
-    />
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Ephemeral Groups</title>
+  <!-- Public Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 
-    <!-- Tailwind CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: 'Public Sans', sans-serif; }
+    .entity { color:#2563eb; cursor:pointer; font-weight:500; }
+    .entity:hover { text-decoration: underline; }
+  </style>
+</head>
 
-    <!-- Public Sans -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-      href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;700&display=swap"
-      rel="stylesheet"
-    >
+<body class="bg-gray-100 text-gray-900">
 
-    <style>
-      body {
-        font-family: 'Public Sans', sans-serif;
-      }
+<!-- HEADER -->
+<header class="bg-white shadow p-4 flex justify-between items-center">
+  <h1 class="text-xl font-bold">Ephemeral Groups</h1>
+  <button onclick="toggleTheme()" class="text-sm border px-3 py-1 rounded">
+    🌗 Theme
+  </button>
+</header>
 
-      .site-logo {
-        position: fixed;
-        top: 0;
-        left: 0;
-        font-family: 'Public Sans',
-          "Apple Color Emoji",
-          "Segoe UI Emoji",
-          "Segoe UI Symbol",
-          "Noto Color Emoji",
-          sans-serif;
-        font-weight: bold;
-        color: #d1d5db;
-        user-select: none;
-        font-size: clamp(8rem, 20vw, 15rem);
-        transform: rotate(-15deg) translate(-25%, -35%);
-        z-index: 0;
-        pointer-events: none;
-      }
+<!-- MAIN -->
+<main class="max-w-3xl mx-auto p-4 space-y-4">
 
-      #root {
-        position: relative;
-        z-index: 1;
-      }
-    </style>
+  <!-- CREATE POST -->
+  <div class="bg-white p-4 rounded shadow">
+    <textarea id="postInput" class="w-full border p-2 rounded"
+      placeholder="Write a post..."></textarea>
+    <button onclick="addPost()" class="mt-2 bg-blue-600 text-white px-4 py-1 rounded">
+      Post
+    </button>
+  </div>
 
-    <!-- Import Map (NO AI) -->
-    <script type="importmap">
-    {
-      "imports": {
-        "react": "https://esm.sh/react@^19.2.4",
-        "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
-        "react/": "https://esm.sh/react@^19.2.4/"
-      }
-    }
-    </script>
-  </head>
+  <!-- FEED -->
+  <div id="feed" class="space-y-4"></div>
+</main>
 
-  <body class="bg-white">
-    <div class="site-logo">EG</div>
-    <div id="root"></div>
+<!-- WIKIPEDIA FRAME -->
+<div id="wikiPanel"
+  class="fixed top-0 right-0 w-full md:w-1/3 h-full bg-white shadow-xl hidden flex-col">
 
-    <!-- App entry -->
-    <script type="module" src="/index.tsx"></script>
-  </body>
+  <div class="flex justify-between items-center p-2 border-b">
+    <strong id="wikiTitle">Wikipedia</strong>
+    <button onclick="closeWiki()" class="text-sm">✖</button>
+  </div>
+
+  <iframe id="wikiFrame" class="w-full h-full border-0"></iframe>
+</div>
+
+<!-- TERMS MODAL -->
+<div id="termsModal"
+  class="fixed inset-0 bg-black/50 hidden flex items-center justify-center">
+
+  <div class="bg-white p-6 max-w-lg rounded shadow space-y-3">
+    <h2 class="font-bold text-lg">Terms & Privacy</h2>
+    <p class="text-sm">
+      Content previews are provided via third-party frames.
+      This platform does not curate, edit, or endorse external content.
+      Entity detection is user-initiated and optional.
+      No editorial responsibility is assumed.
+    </p>
+    <button onclick="closeTerms()" class="border px-3 py-1 rounded">Close</button>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="text-center text-xs text-gray-500 p-4">
+  <span onclick="openTerms()" class="underline cursor-pointer">
+    Terms & Privacy
+  </span>
+</footer>
+
+<script>
+/* ---------- THEME ---------- */
+function toggleTheme() {
+  document.body.classList.toggle('bg-gray-900');
+  document.body.classList.toggle('text-white');
+}
+
+/* ---------- DATA ---------- */
+let posts = [];
+let entities = {
+  musk: { label: "Elon Musk", wiki: "Elon_Musk" },
+  britney: { label: "Britney Spears", wiki: "Britney_Spears" }
+};
+
+/* ---------- POST ---------- */
+function addPost() {
+  const text = postInput.value.trim();
+  if (!text) return;
+  posts.unshift({ id: Date.now(), text, likes:0, comments:[] });
+  postInput.value = "";
+  render();
+}
+
+/* ---------- ENTITY DETECTION ---------- */
+function detect(text) {
+  let out = text;
+  for (let key in entities) {
+    let regex = new RegExp(key, "gi");
+    out = out.replace(regex, match =>
+      `<span class="entity" onclick="confirmEntity('${key}')">${match}</span>`
+    );
+  }
+  return out;
+}
+
+function confirmEntity(key) {
+  if (!confirm(`Are you referring to ${entities[key].label}?`)) return;
+  openWiki(entities[key]);
+}
+
+/* ---------- WIKI ---------- */
+function openWiki(entity) {
+  wikiTitle.textContent = entity.label;
+  wikiFrame.src =
+    "https://en.wikipedia.org/wiki/" + entity.wiki;
+  wikiPanel.classList.remove("hidden");
+}
+function closeWiki() {
+  wikiPanel.classList.add("hidden");
+  wikiFrame.src = "";
+}
+
+/* ---------- COMMENTS ---------- */
+function addComment(postId, input) {
+  let post = posts.find(p => p.id === postId);
+  post.comments.push(input.value);
+  input.value = "";
+  render();
+}
+
+/* ---------- RENDER ---------- */
+function render() {
+  feed.innerHTML = "";
+  posts.forEach(p => {
+    let div = document.createElement("div");
+    div.className = "bg-white p-4 rounded shadow space-y-2";
+
+    div.innerHTML = `
+      <div contenteditable="true"
+        class="border p-2 rounded">${detect(p.text)}</div>
+
+      <div class="flex gap-3 text-sm">
+        <button onclick="p.likes++;render()">❤️ ${p.likes}</button>
+      </div>
+
+      <div class="space-y-1">
+        ${p.comments.map(c => `<div class="text-sm pl-3">💬 ${c}</div>`).join("")}
+        <input class="border p-1 text-sm w-full"
+          placeholder="Comment..."
+          onkeydown="if(event.key==='Enter')addComment(${p.id},this)">
+      </div>
+    `;
+    feed.appendChild(div);
+  });
+}
+
+/* ---------- TERMS ---------- */
+function openTerms(){ termsModal.classList.remove("hidden"); }
+function closeTerms(){ termsModal.classList.add("hidden"); }
+</script>
+
+</body>
 </html>
