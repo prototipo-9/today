@@ -1,105 +1,112 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<title>Community Demo</title>
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta charset="UTF-8">
+<title>Groups Community</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
+/* ---------- THEME ---------- */
 :root {
-  --bg: #f3f4f6;
+  --bg: #f4f5f7;
   --card: #ffffff;
-  --primary: #2563eb;
+  --text: #111827;
   --muted: #6b7280;
+  --primary: #2563eb;
   --border: #e5e7eb;
 }
 
-* { box-sizing: border-box; }
+.dark {
+  --bg: #0f172a;
+  --card: #111827;
+  --text: #e5e7eb;
+  --muted: #9ca3af;
+  --border: #1f2937;
+}
 
+/* ---------- BASE ---------- */
+* { box-sizing: border-box; }
 body {
   margin: 0;
   font-family: system-ui, -apple-system, BlinkMacSystemFont;
   background: var(--bg);
-  color: #111827;
+  color: var(--text);
 }
 
 .app {
   display: grid;
-  grid-template-columns: 220px 1fr 0;
+  grid-template-columns: 240px 1fr 0;
   height: 100vh;
   transition: grid-template-columns .3s ease;
 }
 
 .app.show-panel {
-  grid-template-columns: 220px 1fr 360px;
+  grid-template-columns: 240px 1fr 380px;
 }
 
-/* Sidebar */
+/* ---------- SIDEBAR ---------- */
 .sidebar {
   background: #111827;
   color: #fff;
   padding: 16px;
 }
 
-.sidebar h1 {
-  font-size: 18px;
+.sidebar h2 {
   margin-bottom: 20px;
 }
 
-.sidebar a {
-  display: block;
-  color: #9ca3af;
-  text-decoration: none;
-  margin-bottom: 10px;
+.sidebar button {
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 8px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
 }
 
-.sidebar a:hover {
-  color: #fff;
-}
-
-/* Feed */
+/* ---------- FEED ---------- */
 .feed {
   padding: 24px;
   overflow-y: auto;
 }
 
-.create-post textarea {
-  width: 100%;
-  padding: 12px;
-  border-radius: 10px;
+.card {
+  background: var(--card);
   border: 1px solid var(--border);
-  resize: vertical;
-  font-size: 15px;
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 16px;
 }
 
-.create-post button {
-  margin-top: 8px;
-  padding: 8px 14px;
-  border-radius: 999px;
-  border: none;
+textarea, input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+}
+
+button.primary {
   background: var(--primary);
   color: #fff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 999px;
   cursor: pointer;
 }
 
-.post {
-  background: var(--card);
-  border-radius: 14px;
-  padding: 16px;
-  margin-top: 16px;
-  border: 1px solid var(--border);
-}
-
+/* ---------- POST ---------- */
 .post-actions button {
   background: none;
   border: none;
   margin-right: 8px;
-  color: var(--muted);
   cursor: pointer;
+  color: var(--muted);
 }
 
-.post-actions button:hover {
-  color: var(--primary);
+.post-actions span {
+  margin-right: 10px;
 }
 
 .detected {
@@ -108,12 +115,19 @@ body {
   font-weight: 500;
 }
 
-/* Info Panel */
+/* ---------- COMMENTS ---------- */
+.comment {
+  margin-left: 20px;
+  margin-top: 8px;
+  border-left: 2px solid var(--border);
+  padding-left: 8px;
+}
+
+/* ---------- PANEL ---------- */
 .panel {
-  background: #fafafa;
+  background: var(--card);
   border-left: 1px solid var(--border);
   padding: 12px;
-  overflow-y: auto;
 }
 
 .panel-header {
@@ -122,15 +136,8 @@ body {
   align-items: center;
 }
 
-.panel-header button {
-  background: none;
-  border: none;
-  font-size: 18px;
-  cursor: pointer;
-}
-
-/* Popup */
-.popup {
+/* ---------- MODAL ---------- */
+.modal {
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,.4);
@@ -139,16 +146,11 @@ body {
   align-items: center;
 }
 
-.popup-box {
-  background: #fff;
+.modal-box {
+  background: var(--card);
   padding: 20px;
-  border-radius: 12px;
-  width: 300px;
-}
-
-.popup-box button {
-  margin-right: 6px;
-  margin-top: 10px;
+  border-radius: 14px;
+  width: 320px;
 }
 </style>
 </head>
@@ -157,43 +159,63 @@ body {
 
 <div class="app" id="app">
 
+  <!-- SIDEBAR -->
   <aside class="sidebar">
-    <h1>Community</h1>
-    <a href="#">Feed</a>
-    <a href="#">Groups</a>
-    <a href="#">Members</a>
+    <h2>Groups</h2>
+    <button onclick="setView('feed')">Feed</button>
+    <button onclick="createGroup()">Create Group</button>
+    <button onclick="toggleTheme()">🌙 / ☀️</button>
+    <button onclick="showTerms()">Terms & Privacy</button>
   </aside>
 
-  <main class="feed">
-    <div class="create-post">
-      <textarea id="input" rows="3" placeholder="Write something…"></textarea>
-      <br />
-      <button onclick="publish()">Post</button>
+  <!-- FEED -->
+  <main class="feed" id="feed">
+    <div class="card">
+      <h3>Create post</h3>
+      <textarea id="postInput" rows="3"></textarea>
+      <br><br>
+      <button class="primary" onclick="publish()">Post</button>
     </div>
-
     <div id="posts"></div>
   </main>
 
+  <!-- INFO PANEL -->
   <aside class="panel" id="panel">
     <div class="panel-header">
       <strong id="panelTitle"></strong>
       <button onclick="closePanel()">✕</button>
     </div>
-    <iframe id="wikiFrame" width="100%" height="100%" loading="lazy"></iframe>
+    <iframe id="wikiFrame" width="100%" height="100%"></iframe>
   </aside>
 
 </div>
 
-<div id="popup" class="popup" style="display:none">
-  <div class="popup-box" id="popupBox"></div>
+<!-- MODAL -->
+<div id="modal" class="modal" style="display:none">
+  <div class="modal-box" id="modalBox"></div>
 </div>
 
 <script>
-const entities = [
+/* ---------- STATE ---------- */
+let groups = ["General"];
+let reactions = {};
+let entities = [
   { name: "Elon Musk", aliases: ["musk", "elon"] },
   { name: "Britney Spears", aliases: ["britney", "britnney"] }
 ];
 
+/* ---------- THEME ---------- */
+function toggleTheme() {
+  document.body.classList.toggle("dark");
+}
+
+/* ---------- GROUP ---------- */
+function createGroup() {
+  const name = prompt("Group name:");
+  if (name) groups.push(name);
+}
+
+/* ---------- DETECTION ---------- */
 function detect(text) {
   let found = [];
   entities.forEach(e =>
@@ -205,8 +227,9 @@ function detect(text) {
   return found;
 }
 
+/* ---------- POST ---------- */
 function publish() {
-  let text = input.value;
+  let text = postInput.value;
   detect(text).forEach(d => {
     text = text.replace(
       new RegExp(d.alias, "gi"),
@@ -214,33 +237,52 @@ function publish() {
     );
   });
 
+  const id = Date.now();
+  reactions[id] = 0;
+
   posts.innerHTML += `
-    <div class="post">
-      <div>${text}</div>
+    <div class="card">
+      <div contenteditable="true">${text}</div>
       <div class="post-actions">
-        <button>👍</button>
-        <button>Edit</button>
-        <button>Comment</button>
+        <span onclick="react(${id})">❤️ ${reactions[id]}</span>
+        <button onclick="addComment(this)">Comment</button>
       </div>
+      <div class="comments"></div>
     </div>
   `;
-  input.value = "";
+  postInput.value = "";
 }
 
+/* ---------- COMMENTS ---------- */
+function addComment(btn) {
+  const text = prompt("Comment:");
+  if (!text) return;
+  btn.closest(".card").querySelector(".comments").innerHTML += `
+    <div class="comment" contenteditable="true">${text}</div>
+  `;
+}
+
+/* ---------- REACTIONS ---------- */
+function react(id) {
+  reactions[id]++;
+  event.target.innerText = `❤️ ${reactions[id]}`;
+}
+
+/* ---------- ENTITY ---------- */
 function confirmEntity(name) {
-  popup.style.display = "flex";
-  popupBox.innerHTML = `
+  modal.style.display = "flex";
+  modalBox.innerHTML = `
     <strong>Did you mean:</strong><br><br>
     ${name}?<br><br>
     <button onclick="openPanel('${name}')">Yes</button>
-    <button onclick="closePopup()">No</button>
+    <button onclick="closeModal()">No</button>
   `;
 }
 
 function openPanel(name) {
-  closePopup();
+  closeModal();
   app.classList.add("show-panel");
-  panelTitle.textContent = name;
+  panelTitle.innerText = name;
   wikiFrame.src = "https://en.wikipedia.org/wiki/" + name.replace(/ /g,"_");
 }
 
@@ -249,8 +291,19 @@ function closePanel() {
   wikiFrame.src = "";
 }
 
-function closePopup() {
-  popup.style.display = "none";
+function closeModal() {
+  modal.style.display = "none";
+}
+
+/* ---------- TERMS ---------- */
+function showTerms() {
+  modal.style.display = "flex";
+  modalBox.innerHTML = `
+    <h3>Terms & Privacy</h3>
+    <p>This platform does not provide editorial content. External frames are user-triggered references only.</p>
+    <p>AI features are optional and not required.</p>
+    <button onclick="closeModal()">Close</button>
+  `;
 }
 </script>
 
