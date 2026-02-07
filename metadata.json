@@ -1,8 +1,1 @@
 
-{
-  "name": "Ambiente de Aquisição de Inglês",
-  "description": "Adquira inglês naturalmente como um ser humano em crescimento, do bebê ao adolescente, através de conversas e imagens geradas por IA.",
-  "requestFramePermissions": [
-    "microphone"
-  ]
-}
